@@ -1,0 +1,169 @@
+==================อ่านข้อมูลไฟล์ภาพ==============================
+import cv2
+img = cv2.imread("mustang.jpg",cv2.IMREAD_GRAYSCALE) 
+cv2.imshow('Image',img) //title ของภาพ
+cv2.waitKey(0) //เมื่อกดkey จะปิดwindows
+cv2.destroyAllWindows()
+cv2.imwrite('result.png',img) //เขียนภาพขึ้นมาไหม่
+=============== เปิดกล้อง======================================
+import cv2
+cap = cv2.VideoCapture(0) //เลข0 คือ index ของกล้อง เป็นค่าเริ่มต้น ถ้าใส่เป็น วิดีโอ ก็เป็น("name.mp4")
+while (True):
+    ret,frame = cap.read()
+    cv2.imshow('frame',frame)
+    gray=cv2.cvtColor()frame,cv2.COLOR_BGR2GRAY)
+    if(cv2.waitKey(1) & 0xFF== ord('q')):
+        break
+cap.release()
+cv2.destroyAllWindows()
+======================ทำเป็น GraySclae==============================
+import cv2
+cap = cv2.VideoCapture(0) //เลข0 คือ index ของกล้อง เป็นค่าเริ่มต้น ถ้าใส่เป็น วิดีโอ ก็เป็น("name.mp4")
+while (True):
+    ret,frame = cap.read()
+    gray=cv2.cvtColor()frame,cv2.COLOR_BGR2GRAY)
+    cv2.imshow('frame',gray)
+    if(cv2.waitKey(1) & 0xFF== ord('q')):
+        break
+cap.release()
+cv2.destroyAllWindows()
+=======================เส้นลูกศร===============================
+import cv2
+img = cv2.imread("Mustang.jpg",cv2.IMREAD_COLOR)
+img = cv2.line(img,(0,0),(255,255),(0,0,255),5)
+img = cv2.arrowedLine(img,(0,0),(400,400),(255,0,0),5)
+cv2.imshow('Image',img)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+=======================สี่เหลี่ยม===============================
+import cv2
+img = cv2.imread("Mustang.jpg",cv2.IMREAD_COLOR)
+img = cv2.rectangle(img,(384,0),(510,128),(0,0,255),5)
+cv2.imshow('Image',img)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+=======================วงกลม===============================
+import cv2
+img = cv2.imread("Mustang.jpg",cv2.IMREAD_COLOR)
+img = cv2.circle(img,(447,63),63,(0,0,255),5)
+cv2.imshow('Image',img)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+=======================แสดงข้อความ=============================
+import cv2
+img = cv2.imread("Mustang.jpg",cv2.IMREAD_COLOR)
+img = cv2.putText(img,"OpenCV",(10,100),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+cv2.imshow('Image',img)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
+=======================ตรวจจับใบหน้าจากVideo=============================
+import cv2
+
+faceCascade=cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+
+def draw_boundary(img,classifier,scaleFactor,minNeighbors,color,text):
+    gray=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+    features=classifier.detectMultiScale(gray,scaleFactor,minNeighbors)
+    coords=[]
+    for (x,y,w,h) in features:
+        cv2.rectangle(img,(x,y),(x+w,y+h),color,2)
+        cv2.putText(img,text,(x,y-4),cv2.FONT_HERSHEY_SIMPLEX,0.8,color,1)
+    return img
+
+def detect(img,faceCascade):
+    img=draw_boundary(img,faceCascade,1.1,10,(255,0,0),"Face")
+    return img
+    
+cap = cv2.VideoCapture(0)
+while (True):
+    ret,frame = cap.read()
+    frame=detect(frame,faceCascade)
+    cv2.imshow('frame',frame)
+    if(cv2.waitKey(1) & 0xFF== ord('q')):
+        break
+cap.release()
+cv2.destroyAllWindows()
+=======================ตรวจจับใบหน้าจากVideo เก็บภาพใบหน้า=============================
+import cv2
+
+faceCascade=cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+
+def create_dataset(img,id,img_id):
+    cv2.imwrite("data/pic"+str(id)+"."+str(img_id)+".jpg",img)
+    
+
+def draw_boundary(img,classifier,scaleFactor,minNeighbors,color,clf):
+    gray=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+    features=classifier.detectMultiScale(gray,scaleFactor,minNeighbors)
+    coords=[]
+    for (x,y,w,h) in features:
+        cv2.rectangle(img,(x,y),(x+w,y+h),color,2)
+        id,_=clf.predict(gray[y:y+h,x:x+w])
+
+        if _<= 100:
+            cv2.putText(img,"Nut",(x,y-4),cv2.FONT_HERSHEY_SIMPLEX,0.8,color,2)
+        else :
+            cv2.putText(img,"Unknow",(x,y-4),cv2.FONT_HERSHEY_SIMPLEX,0.8,color,2)
+
+        if (_ < 100):
+            _ = " {0}%".format(round(100 - _))
+        else:
+            _ = " {0}%".format(round(100 - _))
+
+        print(str(_))
+        
+        coords=[x,y,w,h]
+        
+    return img,coords
+
+def detect(img,faceCascade,img_id,clf):
+    img,coords=draw_boundary(img,faceCascade,1.1,10,(0,0,255),clf)
+
+    if len(coords)== 4 :
+        id=1
+        result = img[coords[1]:coords[1]+coords[3],coords[0]:coords[0]+coords[2]]
+        #create_dataset(result,id,img_id)
+    return img
+
+img_id=0
+cap = cv2.VideoCapture(0)
+
+clf=cv2.face.LBPHFaceRecognizer_create()
+clf.read("classifier.xml")
+
+while (True):
+    ret,frame = cap.read()
+    frame=detect(frame,faceCascade,img_id,clf)
+    cv2.imshow('frame',frame)
+    img_id+=1
+    if(cv2.waitKey(1) & 0xFF== ord('q')):
+        break
+cap.release()
+cv2.destroyAllWindows()
+
+=======================เทรนใบหน้าบอกว่าเป็นใคร=============================
+import numpy as np
+from PIL import Image
+import os,cv2
+
+def train_classifier(data_dir):
+    path = [os.path.join (data_dir,f) for f in os.listdir(data_dir)]
+    
+    faces=[]
+    ids=[]
+    
+    for image in path:
+        img=Image.open(image).convert("L")
+        imageNp=np.array(img,'uint8')
+        id=int(os.path.split(image)[1].split(".")[1])
+        faces.append(imageNp)
+        ids.append(id)
+
+    ids=np.array(ids)
+    
+    clf=cv2.face.LBPHFaceRecognizer_create()
+    clf.train(faces,ids)
+    clf.write("classifier.xml")
+        
+train_classifier("data")
